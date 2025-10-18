@@ -53,9 +53,8 @@ async def auth_handler(message: types.Message, state: FSMContext, session):
 @router.message(F.text.in_(commands))
 @require_registration
 async def action_handler(message: types.Message, state: FSMContext, session):
-    object_service = ObjectService(session)
-
-    all_objects = await object_service.get_all_objects()
+    async def _get_all_objects():
+        return await ObjectService(session).get_all_objects()
 
     action = get_clean_text(message.text)
 
@@ -66,32 +65,41 @@ async def action_handler(message: types.Message, state: FSMContext, session):
         )
 
     elif message.text == "📅 Планирую прибытие":
+        objects = await _get_all_objects()
+
         await message.answer(
             text = "Выберите объект для планируемого прибытия:",
             reply_markup = create_dynamic_keyboard(
-                objects = all_objects
+                objects = objects
             )
         )
         await state.update_data(action = action)
+        await state.update_data(objects = objects)
+        await state.set_state(ChooseObjectAndDate.object)
     elif message.text == "🛄 Планирую выезд":
+        objects = await _get_all_objects()
+
         await message.answer(
             text = "Выберите объект для планируемого выезда:",
             reply_markup = create_dynamic_keyboard(
-                objects = all_objects
+                objects = await _get_all_objects()
             )
         )
         await state.update_data(action = action)
+        await state.update_data(objects = objects)
+        await state.set_state(ChooseObjectAndDate.object)
     else:
+        objects = await _get_all_objects()
+
         await message.answer(
             text = f"Выберите объект для действия '{action}':",
             reply_markup = create_dynamic_keyboard(
-                objects = all_objects
+                objects = objects
             )
         )
         await state.update_data(action = action)
-
-    await state.update_data(objects = all_objects)
-    await state.set_state(ChooseObjectAndDate.object)
+        await state.update_data(objects = objects)
+        await state.set_state(ChooseObjectAndDate.object)
 
 
 @router.message(

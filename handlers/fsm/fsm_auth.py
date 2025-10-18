@@ -95,14 +95,8 @@ async def speciality_received(message: types.Message, state: FSMContext, session
         .get_speciality_by(speciality_name = message.text)
 
     if speciality is None:
-        all_specialities = await speciality_service \
-            .get_all_specialities()
-
         await message.answer(
-            text = 'Выберите вашу специальность из списка',
-            reply_markup = create_dynamic_keyboard(
-                objects = all_specialities
-            )
+            text = 'Выберите вашу специальность из списка'
         )
         return
 

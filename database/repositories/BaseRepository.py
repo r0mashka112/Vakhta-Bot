@@ -21,19 +21,14 @@ class BaseRepository:
         return obj
 
 
-    async def read(self, **filters):
-        stmt = select(self.model)
-
-        filters = {
-            key: value for key, value in filters.items() if value is not None
-        }
-
-        if filters:
-            stmt = stmt.filter_by(**filters)
-
+    async def read(self, many = False, **filters):
+        stmt = select(self.model).filter_by(**filters)
         result = await self.session.execute(stmt)
 
-        return result.scalars()
+        if many:
+            return result.scalars().all()
+
+        return result.scalars().first()
 
 
     async def update(self, filters: dict, values: dict):
@@ -47,7 +42,7 @@ class BaseRepository:
         result = await self.session.execute(stmt)
         await self.session.commit()
 
-        return result.scalars()
+        return result.scalar_one_or_none()
 
 
     async def delete(self, filters: dict):

@@ -40,6 +40,7 @@ async def object_name_received(message: types.Message, state: FSMContext, sessio
         return
 
     user_service = UserService(session)
+    attendance_service = AttendanceService(session)
 
     user = await user_service.get_user_by(
         telegram_id = message.from_user.id
@@ -50,8 +51,6 @@ async def object_name_received(message: types.Message, state: FSMContext, sessio
         'object_id': chosen_object.id,
         'action': action
     }
-
-    attendance_service = AttendanceService(session)
 
     attendance = await attendance_service \
         .get_attendance_by(**attendance_data)
@@ -89,8 +88,6 @@ async def object_name_received(message: types.Message, state: FSMContext, sessio
                     ChooseObjectAndDate.planned_date
                 )
             case 'Прибыл' | 'Убыл' | 'Заболел' | 'Задерживаюсь':
-                attendance_service = AttendanceService(session)
-
                 await attendance_service.create_attendance(
                     user_id = user.id,
                     object_id = chosen_object.id,

@@ -5,8 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from keyboards import (
-    create_menu_keyboard,
-    create_dynamic_keyboard
+    create_menu_keyboard
 )
 
 from services import (
@@ -84,20 +83,14 @@ async def speciality_received(message: types.Message, state: FSMContext, session
     )
 
     if speciality is None:
-        all_specialities = await speciality_service\
-            .get_all_specialities()
-
         await message.answer(
-            text = 'Выберите вашу специальность из списка',
-            reply_markup = create_dynamic_keyboard(
-                objects = all_specialities
-            )
+            text = 'Выберите вашу специальность из списка'
         )
         return
 
     updated_user = await user_service.update_user(
         telegram_id = message.from_user.id,
-        speciality_name = speciality.name
+        speciality_id = speciality.id
     )
 
     await message.answer(

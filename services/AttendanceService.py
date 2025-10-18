@@ -2,17 +2,9 @@ from database.repositories import AttendanceRepository
 
 class AttendanceService:
     def __init__(self, session):
-        self.session = session
-        self._attendance_repo = None
-
-    @property
-    def attendance_repo(self):
-        if self._attendance_repo is None:
-            self._attendance_repo = AttendanceRepository(
-                self.session
-            )
-        return self._attendance_repo
-
+        self._attendance_repo = AttendanceRepository(
+            session
+        )
 
     async def create_attendance(
             self,
@@ -22,7 +14,7 @@ class AttendanceService:
             action: str,
             note: str = None
     ):
-        new_attendance = await self.attendance_repo.create(
+        new_attendance = await self._attendance_repo.create(
             user_id = user_id,
             object_id = object_id,
             date = date,
@@ -34,22 +26,25 @@ class AttendanceService:
 
     async def get_attendance_by(
         self,
-        user_id: int,
+        user_id: int = None,
         object_id: int = None,
         date = None,
-        action: str = None,
-        note: str = None
+        action: str = None
     ):
-        attendance_data = {
-            'user_id': user_id,
-            'object_id': object_id,
-            'date': date,
-            'action': action,
-            'note': note
-        }
+        attendance_data = {}
 
-        attendance = await self.attendance_repo.read(
+        if user_id is not None:
+            attendance_data['user_id'] = user_id
+        if object_id is not None:
+            attendance_data['object_id'] = object_id
+        if date is not None:
+            attendance_data['date'] = date
+        if action is not None:
+            attendance_data['action'] = action
+
+        if len(attendance_data) == 0:
+            return await self._attendance_repo.read(many = True)
+
+        return await self._attendance_repo.read(
             **attendance_data
         )
-
-        return attendance.first()
