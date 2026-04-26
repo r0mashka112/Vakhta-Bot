@@ -44,17 +44,15 @@ async def last_name_received(message: types.Message, state: FSMContext):
     )
     await state.set_state(Auth.has_middle_name)
 
-@router.message(
-    Auth.has_middle_name,
-    F.text.lower().in_(['да', 'нет'])
-)
+
+@router.message(Auth.has_middle_name)
 async def has_middle_name_received(message: types.Message, state: FSMContext, session):
     if message.text.lower() == 'да':
         await message.answer(
             text = 'Укажите ваше отчество'
         )
         await state.set_state(Auth.middle_name)
-    else:
+    elif message.text.lower() == 'нет':
         speciality_service = SpecialityService(session)
 
         all_specialities = await speciality_service\
@@ -67,6 +65,11 @@ async def has_middle_name_received(message: types.Message, state: FSMContext, se
             )
         )
         await state.set_state(Auth.speciality)
+    else:
+        await message.answer(
+            text = 'Выберите вариант ответа с помощью клавиатуры'
+        )
+        return
 
 
 @router.message(Auth.middle_name)
@@ -111,6 +114,12 @@ async def speciality_received(message: types.Message, state: FSMContext, session
 
 @router.message(Auth.phone)
 async def phone_received(message: types.Message, state: FSMContext, session):
+    if message.contact is None:
+        await message.answer(
+            text = 'Поделитесь номером с помощью клавиатуры'
+        )
+        return
+
     await state.update_data(phone = f'+{message.contact.phone_number}')
 
     user_data = await state.get_data()
@@ -127,18 +136,6 @@ async def phone_received(message: types.Message, state: FSMContext, session):
         phone = user_data.get('phone')
     )
 
-    admins = await user_service.get_admins()
-
-    for admin in admins:
-        await message.bot.send_message(
-            chat_id = admin.telegram_id,
-            text = (
-                f"👤 Новый пользователь!\n"
-                f"ФИО: {get_full_name(new_user)}\n"
-                f"Telegram ID: {new_user.telegram_id}\n"
-            )
-        )
-
     await message.answer(
         text = (
             f'✅ Регистрация завершена.\n\n'
@@ -152,5 +149,17 @@ async def phone_received(message: types.Message, state: FSMContext, session):
            'С полным списком действий вы можете ознакомить с помощью команды /help',
         reply_markup = create_menu_keyboard()
     )
+
+    admins = await user_service.get_admins()
+
+    for admin in admins:
+        await message.bot.send_message(
+            chat_id = admin.telegram_id,
+            text = (
+                f"👤 Новый пользователь!\n"
+                f"ФИО: {get_full_name(new_user)}\n"
+                f"Telegram ID: {new_user.telegram_id}\n"
+            )
+        )
 
     await state.clear()

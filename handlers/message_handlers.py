@@ -30,7 +30,7 @@ from services import (
 
 router = Router()
 
-@router.message(StateFilter(None), F.text == 'Зарегистрироваться')
+@router.message(F.text == 'Зарегистрироваться')
 async def auth_handler(message: types.Message, state: FSMContext, session):
     user_service = UserService(session)
 
@@ -50,7 +50,7 @@ async def auth_handler(message: types.Message, state: FSMContext, session):
             reply_markup = create_menu_keyboard()
         )
 
-@router.message(F.text.in_(commands))
+@router.message(StateFilter(None), F.text.in_(commands))
 @require_registration
 async def action_handler(message: types.Message, state: FSMContext, session):
     async def _get_all_objects():
@@ -103,6 +103,7 @@ async def action_handler(message: types.Message, state: FSMContext, session):
 
 
 @router.message(
+    StateFilter(None),
     F.text.in_(commands_user_data.values())
 )
 @require_registration
@@ -148,3 +149,10 @@ async def data_action_handler(message: types.Message, state: FSMContext, session
             reply_markup = ReplyKeyboardRemove()
         )
         await state.set_state(ChangeUserData.phone)
+
+
+@router.message(StateFilter(None))
+async def incorrect_messages_handler(message: types.Message):
+    await message.answer(
+        text = 'Не понял вас. Выберите корректную команду'
+    )

@@ -1,4 +1,5 @@
 from aiogram import Router, types
+from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command
 
 from keyboards import create_auth_keyboard,\
@@ -17,7 +18,9 @@ from services import (
 router = Router()
 
 @router.message(Command('start'))
-async def start_handler(message: types.Message, session) -> None:
+async def start_handler(message: types.Message, state: FSMContext, session) -> None:
+    await state.clear()
+
     user_service = UserService(session)
 
     user = await user_service.get_user_by(
